@@ -132,8 +132,6 @@ export class Agent {
         - **Always try to provide short, clear and concise responses**
         `);
 
-      console.log(this.threadId, toolNumbers);
-
       if (checkPointer === "mongo") {
         try {
           this.mongoClient = new MongoClient(process.env.MONGO_URI!);
@@ -153,7 +151,7 @@ export class Agent {
         checkpointSaver: this.checkPointSaver,
       });
 
-      console.log(this.params);
+      console.log(chalk.green("Agent initialized successfully"));
     } catch (error: any) {
       console.error("Agent initialization error:", error);
     }
