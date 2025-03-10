@@ -1,0 +1,20 @@
+# Source
+src/
+
+# Dev files
+.gitignore
+.env
+.env.example
+tsconfig.json
+.eslintrc.js
+.prettierrc
+.vscode/
+
+# Tests
+tests/
+coverage/
+*.test.ts
+
+# Misc
+node_modules/
+npm-debug.log
