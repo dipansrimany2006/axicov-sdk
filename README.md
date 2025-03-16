@@ -1,6 +1,6 @@
 # Axicov SDK
 
-A powerful SDK for creating and managing AI agents with tools using LangChain.
+A powerful SDK for creating and managing AI agents with tools using LangChain
 
 ## Installation
 

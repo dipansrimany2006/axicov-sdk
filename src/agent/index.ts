@@ -22,6 +22,8 @@ export class Agent {
   public agent: any;
   public params: any;
   public runtimeParams: any;
+  registry: any;
+  public toolKnowledge: any;
 
   constructor({ threadId, params }: { threadId: string; params: any }) {
     this.threadId = threadId;
@@ -58,12 +60,12 @@ export class Agent {
 
   async initialize({
     toolNumbers,
-    coreRegistry,
+    clients,
     allRegistry,
     checkPointer = "local",
   }: {
     toolNumbers: number[];
-    coreRegistry: ((agent: Agent) =>
+    clients: ((agent: Agent) =>
       | Promise<{
           tools: any[];
           schema: Tools;
@@ -84,11 +86,10 @@ export class Agent {
         await exportToolsAndSetMetadata(
           this,
           toolNumbers,
-          coreRegistry,
+          clients,
           allRegistry
         );
       } catch (error: any) {
-        // Explicitly handle tool loading errors and stop initialization
         console.error("Failed to load tools:", error);
         clearThreadContext();
         throw new Error(`Agent initialization failed: ${error.message}`);
@@ -116,8 +117,8 @@ export class Agent {
         
         Common knowledge:
         - Your are hyperoptimized for sonic blockchain
-        - Your wallet address: ${this.params.publicKey || ""}
         - Chain currently Operating on: Sonic
+        - Short Description about sonic: Sonic is a high-speed, low-fee blockchain built on top of solana.
         
         Realtime knowledge:
         - { approximateCurrentTime: ${new Date().toISOString()}}
@@ -130,6 +131,16 @@ export class Agent {
         - The development team will update you with more features
         - Don't use tools when it is not necessary
         - **Always try to provide short, clear and concise responses**
+
+        ADDITIONAL KNOWLEDGE FROM TOOLS:
+        ${
+          this.params.toolKnowledge &&
+          this.params.toolKnowledge.length > 0 &&
+          this.params.toolKnowledge
+            .filter((item: string) => item !== "")
+            .map((item: string) => `- ${item}`)
+            .join("\n")
+        }
         `);
 
       if (checkPointer === "mongo") {

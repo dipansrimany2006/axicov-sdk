@@ -1,6 +1,6 @@
 import { any } from "zod";
 import { Agent } from "../agent";
-import { Tools } from "../types";
+import { Tools, toolType } from "../types";
 
 /**
  *
@@ -23,15 +23,18 @@ export const exportToolsAndSetMetadata = async (
 
     const toolPromises = coreRegistry.concat(filteredToolBunches).map(
       async (
-        item: (agent: Agent) =>
-          | Promise<{
-              tools: any[];
-              schema: Tools;
-            }>
-          | any
+        item: (agent: Agent) => Promise<{
+          tools: toolType[];
+          schema: Tools;
+        }>
       ) => {
         try {
           const toolItem = await item(agent);
+
+          toolItem.tools.map((tool) => {
+            console.log(tool.name);
+          });
+
           agent.tools.push(...toolItem.tools);
 
           Object.values(toolItem.schema).forEach((item: any) => {
