@@ -235,20 +235,6 @@ export const priceToolRegistry = async (agent: Agent) => {
 };
 ```
 
-## Thread Context
-
-The SDK uses a thread context system to manage conversation state:
-
-```typescript
-import { setThreadContext, clearThreadContext } from "axicov-sdk";
-
-// Set current thread context
-setThreadContext("my-thread-id");
-
-// Clear current thread context
-clearThreadContext();
-```
-
 ## License
 
 ISC

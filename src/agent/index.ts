@@ -5,7 +5,6 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { SystemMessage } from "@langchain/core/messages";
 import { MongoDBSaver } from "@langchain/langgraph-checkpoint-mongodb";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
-import { clearThreadContext, setThreadContext } from "../utils/threadContext";
 import { exportToolsAndSetMetadata } from "../registry";
 import { Tools } from "../types";
 import { MemorySaver } from "@langchain/langgraph-checkpoint";
@@ -80,8 +79,6 @@ export class Agent {
     checkPointer?: "local" | "mongo";
   }) {
     try {
-      await setThreadContext(this.threadId);
-
       try {
         await exportToolsAndSetMetadata(
           this,
@@ -91,7 +88,6 @@ export class Agent {
         );
       } catch (error: any) {
         console.error("Failed to load tools:", error);
-        clearThreadContext();
         throw new Error(`Agent initialization failed: ${error.message}`);
       }
 
@@ -170,8 +166,6 @@ export class Agent {
 
   async messageAgent(msg: string) {
     try {
-      await setThreadContext(this.threadId);
-
       let response;
       try {
         const read = await this.checkPointSaver.get(this.config);
@@ -206,11 +200,17 @@ export class Agent {
         console.error("Error invoking agent:", error);
       }
 
-      clearThreadContext();
       return response.messages[response.messages.length - 1].content;
     } catch (error: any) {
-      clearThreadContext();
       console.error("Message agent error:", error);
+    }
+  }
+
+  async orchestrate(msg: string) {
+    try {
+      // Find out the tools that are required to complete the flow of the message
+    } catch (err) {
+      console.error("Error in orchestration:", err);
     }
   }
 }
