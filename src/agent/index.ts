@@ -2,18 +2,19 @@ import { MongoClient } from "mongodb";
 import chalk from "chalk";
 import { ChatAnthropic } from "@langchain/anthropic";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { SystemMessage } from "@langchain/core/messages";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { MongoDBSaver } from "@langchain/langgraph-checkpoint-mongodb";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { exportToolsAndSetMetadata } from "../registry";
-import { Tools } from "../types";
+import { Tools, toolType } from "../types";
 import { MemorySaver } from "@langchain/langgraph-checkpoint";
+import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 
 export class Agent {
-  public tools: any[];
+  public tools: { [key: string]: toolType };
   public threadId: string;
   toolMetadata: string;
-  public model;
+  public model: BaseChatModel;
   public systemPrompt?: SystemMessage;
   public mongoClient: any;
   public checkPointSaver: any;
@@ -27,7 +28,7 @@ export class Agent {
   constructor({ threadId, params }: { threadId: string; params: any }) {
     this.threadId = threadId;
     this.params = params;
-    this.tools = [];
+    this.tools = {};
     this.toolMetadata = "";
     this.runtimeParams = {};
 
@@ -152,11 +153,8 @@ export class Agent {
         this.checkPointSaver = new MemorySaver();
       }
 
-      this.agent = createReactAgent({
-        llm: this.model,
-        tools: this.tools,
-        checkpointSaver: this.checkPointSaver,
-      });
+      this.agent = "";
+      this.orchestrate("Fetch price of apples in russia");
 
       console.log(chalk.green("Agent initialized successfully"));
     } catch (error: any) {
@@ -166,16 +164,22 @@ export class Agent {
 
   async messageAgent(msg: string) {
     try {
+      const agent = await this.orchestrate(msg);
+
+      if (!agent) {
+        throw new Error("Agent failed");
+      }
+
       let response;
       try {
         const read = await this.checkPointSaver.get(this.config);
 
         if (!read) {
-          response = await this.agent.invoke(
+          response = await agent.invoke(
             {
               messages: [
-                this.systemPrompt,
-                { role: "user", content: msg.toString() },
+                this.systemPrompt as SystemMessage,
+                new HumanMessage(msg.toString()),
               ],
             },
             {
@@ -187,7 +191,7 @@ export class Agent {
         } else {
           response = await this.agent.invoke(
             {
-              messages: [{ role: "user", content: msg.toString() }],
+              messages: [new HumanMessage(msg.toString())],
             },
             {
               configurable: {
@@ -209,8 +213,46 @@ export class Agent {
   async orchestrate(msg: string) {
     try {
       // Find out the tools that are required to complete the flow of the message
+      const orchestrationPrompt = new SystemMessage(`
+      You are Axicov Orchestrator, an AI assistant specialized in Sonic blockchain and DeFi operations.
+
+      Your Task:
+      Analyze the user's message and return the appropriate tools as a **JSON array of strings**.  
+
+      Rules:
+      - Only include the askForConfirmation tool if the user's message requires a transaction signature or if they are creating an action.
+      - Only return the tools in the format: ["tool1", "tool2", ...].  
+      - Do not add any text, explanations, or comments outside the array.
+      - Be complete — include all necessary tools to handle the request, if you're unsure, it's better to include the tool than to leave it out.
+      - If the request cannot be completed with the available toolsets, return an array describing the unknown tools ["INVALID_TOOL:\${INVALID_TOOL_NAME}"].
+
+      Available Tools:
+      ${Object.keys(this.tools)
+        .map((toolName) => `${toolName}: ${this.tools[toolName].description}`)
+        .join("\n")}
+      `);
+
+      const orchestrationResponse = await this.model.invoke([
+        orchestrationPrompt,
+        new HumanMessage(msg.toString()),
+      ]);
+
+      const toolNames: string[] = JSON.parse(
+        orchestrationResponse.content.toString()
+      );
+
+      console.log(chalk.bgRed(toolNames));
+
+      const agent = createReactAgent({
+        llm: this.model,
+        tools: toolNames.map((name) => this.tools[name]),
+        checkpointSaver: this.checkPointSaver,
+      });
+
+      return agent;
     } catch (err) {
       console.error("Error in orchestration:", err);
+      return false;
     }
   }
 }

@@ -31,11 +31,9 @@ export const exportToolsAndSetMetadata = async (
         try {
           const toolItem = await item(agent);
 
-          toolItem.tools.map((tool) => {
-            console.log(tool.name);
+          toolItem.tools.forEach((tool) => {
+            agent.tools[tool.name] = tool;
           });
-
-          agent.tools.push(...toolItem.tools);
 
           Object.values(toolItem.schema).forEach((item: any) => {
             toolMetadata.push(`
@@ -84,7 +82,7 @@ export const exportToolsAndSetMetadata = async (
     }
 
     // If no tools were loaded successfully, throw an error
-    if (agent.tools.length === 0) {
+    if (Object.values(agent.tools).length === 0) {
       console.error("No tools were loaded successfully");
     }
 

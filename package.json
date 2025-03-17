@@ -12,7 +12,7 @@
     "prepublishOnly": "npm run build",
     "lint": "eslint src --ext .ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node tests/index.ts"
+    "dev": "tsx tests/index.ts"
   },
   "keywords": [
     "ai",
