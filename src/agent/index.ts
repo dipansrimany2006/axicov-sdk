@@ -1,7 +1,5 @@
 import { MongoClient } from "mongodb";
 import chalk from "chalk";
-import { ChatAnthropic } from "@langchain/anthropic";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { MongoDBSaver } from "@langchain/langgraph-checkpoint-mongodb";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
@@ -24,7 +22,15 @@ export class Agent {
   public runtimeParams: any;
   registry: any;
 
-  constructor({ threadId, params }: { threadId: string; params: any }) {
+  constructor({
+    threadId,
+    params,
+    model,
+  }: {
+    threadId: string;
+    params: any;
+    model: BaseChatModel;
+  }) {
     this.threadId = threadId;
     this.params = params;
     this.tools = {};
@@ -33,18 +39,10 @@ export class Agent {
     this.params.toolKnowledge = [];
 
     try {
-      if (process.env.ANTHROPIC_API_KEY) {
-        this.model = new ChatAnthropic({
-          apiKey: process.env.ANTHROPIC_API_KEY,
-          model: "claude-3-haiku-20240307",
-        });
-        console.log(chalk.red("Model Initilaized"));
-      } else if (process.env.GEMINI_API_KEY) {
-        this.model = new ChatGoogleGenerativeAI({
-          apiKey: process.env.GEMINI_API_KEY,
-        });
-      } else {
+      if (!model) {
         throw new Error("No valid API key found for AI models");
+      } else {
+        this.model = model;
       }
     } catch (error: any) {
       console.error("Error initializing model:", error);
