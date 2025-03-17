@@ -11,7 +11,7 @@ import { Tools, toolType } from "../types";
 export const exportToolsAndSetMetadata = async (
   agent: Agent,
   toolNumbers: number[],
-  coreRegistry: any,
+  clients: any,
   allRegistry: any
 ) => {
   try {
@@ -21,7 +21,7 @@ export const exportToolsAndSetMetadata = async (
       toolNumbers.includes(idx)
     );
 
-    const toolPromises = coreRegistry.concat(filteredToolBunches).map(
+    const toolPromises = clients.concat(filteredToolBunches).map(
       async (
         item: (agent: Agent) => Promise<{
           tools: toolType[];

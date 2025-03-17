@@ -23,7 +23,6 @@ export class Agent {
   public params: any;
   public runtimeParams: any;
   registry: any;
-  public toolKnowledge: any;
 
   constructor({ threadId, params }: { threadId: string; params: any }) {
     this.threadId = threadId;
@@ -31,6 +30,7 @@ export class Agent {
     this.tools = {};
     this.toolMetadata = "";
     this.runtimeParams = {};
+    this.params.toolKnowledge = [];
 
     try {
       if (process.env.ANTHROPIC_API_KEY) {
@@ -153,9 +153,6 @@ export class Agent {
         this.checkPointSaver = new MemorySaver();
       }
 
-      this.agent = "";
-      this.orchestrate("Fetch price of apples in russia");
-
       console.log(chalk.green("Agent initialized successfully"));
     } catch (error: any) {
       console.error("Agent initialization error:", error);
@@ -189,7 +186,7 @@ export class Agent {
             }
           );
         } else {
-          response = await this.agent.invoke(
+          response = await agent.invoke(
             {
               messages: [new HumanMessage(msg.toString())],
             },
@@ -204,9 +201,13 @@ export class Agent {
         console.error("Error invoking agent:", error);
       }
 
-      return response.messages[response.messages.length - 1].content;
+      return (
+        (response && response.messages[response.messages.length - 1].content) ||
+        "Error"
+      );
     } catch (error: any) {
       console.error("Message agent error:", error);
+      return error;
     }
   }
 
@@ -217,14 +218,26 @@ export class Agent {
       You are Axicov Orchestrator, an AI assistant specialized in Sonic blockchain and DeFi operations.
 
       Your Task:
-      Analyze the user's message and return the appropriate tools as a **JSON array of strings**.  
+      Analyze the user's message and return the appropriate tools as a **JSON array of strings**.
+      If the request can be processed with the knowledge provided to you, then return an **empty JSON array []**
 
       Rules:
-      - Only include the askForConfirmation tool if the user's message requires a transaction signature or if they are creating an action.
       - Only return the tools in the format: ["tool1", "tool2", ...].  
       - Do not add any text, explanations, or comments outside the array.
       - Be complete — include all necessary tools to handle the request, if you're unsure, it's better to include the tool than to leave it out.
-      - If the request cannot be completed with the available toolsets, return an array describing the unknown tools ["INVALID_TOOL:\${INVALID_TOOL_NAME}"].
+      - If the request cannot be completed with the available tools, return an array describing the unknown tools ["INVALID_TOOL:\${INVALID_TOOL_NAME}"].
+      - If no tools are required to process the request return an empty array [].
+      - If the request can be processed with the knowledge provided to you, then return an empty array []
+
+      Knowledge:
+      ${
+        this.params.toolKnowledge &&
+        this.params.toolKnowledge.length > 0 &&
+        this.params.toolKnowledge
+          .filter((item: string) => item !== "")
+          .map((item: string) => `- ${item}`)
+          .join("\n")
+      }
 
       Available Tools:
       ${Object.keys(this.tools)
@@ -241,11 +254,9 @@ export class Agent {
         orchestrationResponse.content.toString()
       );
 
-      console.log(chalk.bgRed(toolNames));
-
       const agent = createReactAgent({
         llm: this.model,
-        tools: toolNames.map((name) => this.tools[name]),
+        tools: toolNames.map((name) => this.tools[name]) || [],
         checkpointSaver: this.checkPointSaver,
       });
 
