@@ -110,11 +110,6 @@ export class Agent {
         - Use emojis sparingly and only when appropriate for the context
         - Use an abbreviated format for transaction signatures
         
-        Common knowledge:
-        - Your are hyperoptimized for sonic blockchain
-        - Chain currently Operating on: Sonic
-        - Short Description about sonic: Sonic is a high-speed, low-fee blockchain built on top of solana.
-        
         Realtime knowledge:
         - { approximateCurrentTime: ${new Date().toISOString()}}
         
@@ -183,7 +178,7 @@ export class Agent {
     try {
       // Find out the tools that are required to complete the flow of the message
       const orchestrationPrompt = new SystemMessage(`
-      You are Axicov Orchestrator, an AI assistant specialized in Sonic blockchain and DeFi operations.
+      You are Axicov Orchestrator, an AI assistant specialized in blockchain and DeFi operations.
 
       Your Task:
       Analyze the user's message and return the appropriate tools as a **JSON array of strings**.
