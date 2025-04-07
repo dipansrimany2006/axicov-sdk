@@ -13,7 +13,7 @@ export class Agent {
   public threadId: string;
   toolMetadata: string;
   public model: BaseChatModel;
-  public systemPrompt?: SystemMessage;
+  public systemPrompt?: string;
   public mongoClient: any;
   public checkPointSaver: any;
   public config;
@@ -90,7 +90,7 @@ export class Agent {
         throw new Error(`Agent initialization failed: ${error.message}`);
       }
 
-      this.systemPrompt = new SystemMessage(`
+      this.systemPrompt = `
         Your name is ${this.params.name} (Agent).
         
         INSTRUCTIONS:
@@ -136,7 +136,7 @@ export class Agent {
             .map((item: string) => `- ${item}`)
             .join("\n")
         }
-        `);
+        `;
 
       if (checkPointer === "mongo") {
         try {
@@ -159,50 +159,20 @@ export class Agent {
 
   async messageAgent(msg: string) {
     try {
-      const agent = await this.orchestrate(msg);
+      const tools = await this.orchestrate(msg);
+
+      const agent = createReactAgent({
+        llm: this.model,
+        tools: tools,
+        checkpointSaver: this.checkPointSaver,
+        messageModifier: this.systemPrompt as string,
+      });
 
       if (!agent) {
         throw new Error("Agent failed");
       }
 
-      let response;
-      try {
-        const read = await this.checkPointSaver.get(this.config);
-
-        if (!read) {
-          response = await agent.invoke(
-            {
-              messages: [
-                this.systemPrompt as SystemMessage,
-                new HumanMessage(msg.toString()),
-              ],
-            },
-            {
-              configurable: {
-                thread_id: this.threadId,
-              },
-            }
-          );
-        } else {
-          response = await agent.invoke(
-            {
-              messages: [new HumanMessage(msg.toString())],
-            },
-            {
-              configurable: {
-                thread_id: this.threadId,
-              },
-            }
-          );
-        }
-      } catch (error: any) {
-        console.error("Error invoking agent:", error);
-      }
-
-      return (
-        (response && response.messages[response.messages.length - 1].content) ||
-        "Error"
-      );
+      return agent;
     } catch (error: any) {
       console.error("Message agent error:", error);
       return error;
@@ -252,16 +222,16 @@ export class Agent {
         orchestrationResponse.content.toString()
       );
 
-      const agent = createReactAgent({
-        llm: this.model,
-        tools: toolNames.map((name) => this.tools[name]) || [],
-        checkpointSaver: this.checkPointSaver,
-      });
+      // const agent = createReactAgent({
+      //   llm: this.model,
+      //   tools: toolNames.map((name) => this.tools[name]) || [],
+      //   checkpointSaver: this.checkPointSaver,
+      // });
 
-      return agent;
+      return toolNames.map((name) => this.tools[name]) || [];
     } catch (err) {
       console.error("Error in orchestration:", err);
-      return false;
+      return [];
     }
   }
 }
