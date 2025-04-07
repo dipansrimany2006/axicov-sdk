@@ -1,6 +1,6 @@
 {
   "name": "axicov-sdk",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "SDK for creating and managing AI agents with tools",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
