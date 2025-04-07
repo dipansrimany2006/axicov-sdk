@@ -61,6 +61,7 @@ export class Agent {
     clients,
     allRegistry,
     checkPointer = "local",
+    mongoUri,
   }: {
     toolNumbers: number[];
     clients: ((agent: Agent) =>
@@ -76,6 +77,7 @@ export class Agent {
         }>
       | any)[];
     checkPointer?: "local" | "mongo";
+    mongoUri?: string;
   }) {
     try {
       try {
@@ -135,7 +137,9 @@ export class Agent {
 
       if (checkPointer === "mongo") {
         try {
-          this.mongoClient = new MongoClient(process.env.MONGO_URI!);
+          this.mongoClient = new MongoClient(
+            mongoUri || process.env.MONGO_URI!
+          );
           await this.mongoClient.connect(); // Test connection
           this.checkPointSaver = new MongoDBSaver({ client: this.mongoClient });
         } catch (error: any) {
