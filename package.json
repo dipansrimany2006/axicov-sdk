@@ -12,7 +12,10 @@
     "prepublishOnly": "npm run build",
     "lint": "eslint src --ext .ts",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx tests/index.ts"
+    "dev": "tsx tests/index.ts",
+    "server": "tsx src/server/index.ts",
+    "server:dev": "tsx watch src/server/index.ts",
+    "start": "node dist/server/index.js"
   },
   "keywords": [
     "ai",
@@ -37,8 +40,12 @@
     "@langchain/langgraph": "^0.2.54",
     "@langchain/langgraph-checkpoint": "^0.0.16",
     "@langchain/langgraph-checkpoint-mongodb": "^0.0.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
     "chalk": "4.1.2",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
+    "express": "^5.1.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
